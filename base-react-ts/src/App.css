@@ -1,0 +1,30 @@
+/* Aplica el fondo blanco al body */
+body {
+    margin: 0;
+    height: 100vh; /* Hace que ocupe toda la altura de la pantalla */
+    background-color: #ffffff; /* Fondo blanco */
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+}
+
+/* Estilo adicional para el contenedor App */
+#root {
+    width: 100%; /* Asegura que ocupe todo el espacio disponible */
+    height: 100%; /* Igual que el body */
+}
+
+.App {
+    padding: 20px; /* Espaciado interno */
+    text-align: center; /* Centra el texto dentro del App */
+    border: 1px solid #ccc; /* (Opcional) Borde para resaltar el contenedor */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* (Opcional) Sombra */
+    border-radius: 8px; /* Esquinas redondeadas */
+    background-color: #f9f9f9; /* Fondo del contenedor */
+}
+  
+h2 {
+    text-align: left;
+    margin: 20px 0;
+    color:#303030;
+}
