@@ -1,157 +1,149 @@
 import express from 'express'
-import bcrypt from 'bcrypt'
 
 import Department from '../schemas/department.js'
+import Position from '../schemas/position.js'
 
 const router = express.Router()
 
 router.get('/', getAllDepartments)
-// router.get('/:id', getUserById)
-// router.post('/', createUser)
-// router.put('/:id', updateUser)
-// router.delete('/:id', deleteUser)
+router.post('/', createDepartment)
+router.get('/:id', getDepartmentById)
+router.put('/:id', updateDepartment)
+router.delete('/:id', deleteDepartment)
 
 async function getAllDepartments(req, res, next) {
-  console.log('getAllDepartments by user ', req.user._id)
-  try {
-    const departments = await Department.find().populate({
-        path: 'positions', // Nombre del virtual field
-        select: 'name areaId createdAt updatedAt', // Campos que deseas incluir
-      });
-    res.send(departments)
-  } catch (err) {
-    next(err)
-  }
+    console.log('getAllDepartments by user ', req.user._id)
+    try {
+        const departments = await Department.find().populate({
+            path: 'positions',
+            select: 'name areaId createdAt updatedAt',
+        });
+        res.send(departments)
+    } catch (err) {
+        next(err)
+    }
 }
 
-// async function getUserById(req, res, next) {
-//   console.log('getUser with id: ', req.params.id)
+async function createDepartment(req, res, next) {
+    console.log('createDepartment: ', req.body);
 
-//   if (!req.params.id) {
-//     res.status(500).send('The param id is not defined')
-//   }
+    const department = req.body;
 
-//   try {
-//     const user = await User.findById(req.params.id).populate('role')
+    try {
+        // Crear el departamento
+        const departmentCreated = await Department.create({
+            ...department
+        });
 
-//     if (!user || user.length == 0) {
-//       res.status(404).send('User not found')
-//     }
+        // Crear los puestos asociados
+        const headPosition = {
+            name: `Jefe de ${department.name}`,
+            areaId: department.areaId,
+            departmentId: departmentCreated._id,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
 
-//     res.send(user)
-//   } catch (err) {
-//     next(err)
-//   }
-// }
+        const employeePosition = {
+            name: `Empleado de ${department.name}`,
+            areaId: department.areaId,
+            departmentId: departmentCreated._id,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
 
-// async function createUser(req, res, next) {
-//   console.log('createUser: ', req.body)
+        const positionsCreated = await Position.insertMany([headPosition, employeePosition]);
 
-//   const user = req.body
+        // Agregar referencia del jefe al departamento, si aplica
+        departmentCreated.head = positionsCreated[0]._id;
+        await departmentCreated.save();
 
-//   try {
-//     const role = await Role.findOne({ _id: user.role })
-//     if (!role) {
-//       res.status(404).send('Role not found')
-//     }
+        // Responder con el departamento y las posiciones creadas
+        res.send({ department: departmentCreated, positions: positionsCreated });
+    } catch (err) {
+        next(err);
+    }
+}
 
-//     const passEncrypted = await bcrypt.hash(user.password, 10)
+async function getDepartmentById(req, res, next) {
+    console.log('getDepartmentById with id: ', req.params.id)
 
-//     const userCreated = await User.create({
-//       ...user,
-//       bornDate: toDate(user.bornDate),
-//       password: passEncrypted,
-//       role: role,
-//     })
+    if (!req.params.id) {
+        res.status(500).send('The param id is not defined')
+    }
 
-//     res.send(userCreated)
-//   } catch (err) {
-//     next(err)
-//   }
-// }
+    try {
+        const department = await Department.findById(req.params.id);
 
-// async function updateUser(req, res, next) {
-//   console.log('updateUser with id: ', req.params.id)
+        if (!department || department.length == 0) {
+            res.status(404).send('Department not found')
+        }
 
-//   if (!req.params.id) {
-//     return res.status(404).send('Parameter id not found')
-//   }
+        res.send(department)
+    } catch (err) {
+        next(err)
+    }
+}
 
-//   if (!req.isAdmin() && req.params.id !== req.user._id) {
-//     return res.status(403).send('Unauthorized')
-//   }
+async function updateDepartment(req, res, next) {
+    console.log('updateDepartment with id: ', req.params.id)
 
+    if (!req.params.id) {
+        return res.status(404).send('Parameter id not found')
+    }
 
-//   // Si se edita a si mismo, no puede modificarse su rol
-//   if(req.params.id == req.user._id){
-//     delete req.body.role
-//   }
+    if (!req.isAdmin()) {
+        return res.status(403).send('Unauthorized')
+    }
 
-//   // The email can't be updated
-//   delete req.body.email
+    try {
+        const departmentToUpdate = await Department.findById(req.params.id)
 
-//   try {
-//     const userToUpdate = await User.findById(req.params.id)
+        if (!departmentToUpdate) {
+            console.error('Department not found')
+            return res.status(404).send('Department not found')
+        }
 
-//     if (!userToUpdate) {
-//       console.error('User not found')
-//       return res.status(404).send('User not found')
-//     }
+        // This will return the previous status
+        await departmentToUpdate.updateOne(req.body);
+        const positions = await Position.find({ departmentId: req.params.id });
+        
+        // Actualizo los nombres de los positions
+        for (const position of positions) {
+            const rolePrefix = position.name.startsWith('Jefe de') ? 'Jefe de' : 'Empleado de';
+            position.name = `${rolePrefix} ${req.body.name}`;
+            await position.save();
+        }
 
-//     if (req.body.role) {
-//       const newRole = await Role.findById(req.body.role)
+        res.send(departmentToUpdate)
+    } catch (err) {
+        next(err)
+    }
+}
 
-//       if (!newRole) {
-//         console.info('New role not found. Sending 400 to client')
-//         return res.status(400).end()
-//       }
-//       req.body.role = newRole._id
-//     }
+async function deleteDepartment(req, res, next) {
+    console.log('deleteDepartment with id: ', req.params.id)
 
-//     if (req.body.password) {
-//       const passEncrypted = await bcrypt.hash(req.body.password, 10)
-//       req.body.password = passEncrypted
-//     }
+    if (!req.params.id) {
+        res.status(500).send('The param id is not defined')
+    }
 
-//     // This will return the previous status
-//     await userToUpdate.updateOne(req.body)
-//     res.send(userToUpdate)
+    try {
+        const department = await Department.findById(req.params.id)
 
-//     // This return the current status
-//     // userToUpdate.password = req.body.password
-//     // userToUpdate.role = req.body.role
-//     // userToUpdate.firstName = req.body.firstName
-//     // userToUpdate.lastName = req.body.lastName
-//     // userToUpdate.phone = req.body.phone
-//     // userToUpdate.bornDate = req.body.bornDate
-//     // userToUpdate.isActive = req.body.isActive
-//     // await userToUpdate.save()
-//     // res.send(userToUpdate)
-//   } catch (err) {
-//     next(err)
-//   }
-// }
+        if (!department) {
+            res.status(404).send('Department not found')
+        }
 
-// async function deleteUser(req, res, next) {
-//   console.log('deleteUser with id: ', req.params.id)
+        // Elimino posiciones relacionadas al departamento
+        const deletedPositions = await Position.deleteMany({ departmentId: department._id });
 
-//   if (!req.params.id) {
-//     res.status(500).send('The param id is not defined')
-//   }
+        await Department.deleteOne({ _id: department._id })
 
-//   try {
-//     const user = await User.findById(req.params.id)
-
-//     if (!user) {
-//       res.status(404).send('User not found')
-//     }
-
-//     await User.deleteOne({ _id: user._id })
-
-//     res.send(`User deleted :  ${req.params.id}`)
-//   } catch (err) {
-//     next(err)
-//   }
-// }
+        res.send(`Department deleted :  ${req.params.id}`)
+    } catch (err) {
+        next(err)
+    }
+}
 
 export default router
