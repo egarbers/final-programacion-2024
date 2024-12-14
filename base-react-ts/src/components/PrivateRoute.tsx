@@ -11,12 +11,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         if (!token) {
             navigate('/login');
         } else {
-            // Aca podria chequear que sea valido? de todas formas si back responde ok con token estaria bien. Pero capaz puede modificarse el localStorage
-            // if (isValidToken(token)) {
-                setIsAuthenticated(true);
-            // } else {
-            //     navigate('/login');
-            // }
+            setIsAuthenticated(true);
         }
     }, [navigate]);
 

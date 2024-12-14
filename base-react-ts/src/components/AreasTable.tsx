@@ -4,25 +4,25 @@ import { Table, Spin, message, Dropdown, Menu, Button, Modal } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 
-const UsersTable = () => {
-    const [users, setUsers] = useState([]);
+const AreasTable = () => {
+    const [areas, setAreas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedArea, setSelectedArea] = useState(null);
 
     const token = localStorage.getItem('token');
     const currentUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') as string) : null;
 
-    const fetchUsers = async () => {
+    const fetchAreas = async () => {
         try {
-            const response = await axios.get('http://localhost:4000/users', {
+            const response = await axios.get('http://localhost:4000/areas', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
             });
 
-            setUsers(response.data);
+            setAreas(response.data);
             setLoading(false);
         } catch (error) {
             message.error('Error al cargar los usuarios');
@@ -31,32 +31,32 @@ const UsersTable = () => {
     };
 
     useEffect(() => {
-        fetchUsers();
+        fetchAreas();
     }, []);
 
     const handleDelete = async () => {
-        if (!selectedUser) return;
+        if (!selectedArea) return;
 
         try {
-            await axios.delete(`http://localhost:4000/users/${selectedUser._id}`, {
+            await axios.delete(`http://localhost:4000/areas/${selectedArea._id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
             });
-            message.success('Usuario eliminado correctamente');
+            message.success('Area eliminada correctamente');
             setIsModalVisible(false);
-            setSelectedUser(null);
-            fetchUsers(); // Refrescar la lista
+            setSelectedArea(null);
+            fetchAreas(); // Refrescar la lista
         } catch (error) {
-            message.error('Error al eliminar el usuario');
+            message.error('Error al eliminar el area');
             setIsModalVisible(false);
-            setSelectedUser(null);
+            setSelectedArea(null);
         }
     };
 
     const showDeleteModal = (record) => {
-        setSelectedUser(record);
+        setSelectedArea(record);
         setIsModalVisible(true);
     };
 
@@ -68,63 +68,42 @@ const UsersTable = () => {
         },
         {
             title: 'Nombre',
-            dataIndex: 'firstName',
-            key: 'firstName',
+            dataIndex: 'name',
+            key: 'name',
         },
         {
-            title: 'Apellido',
-            dataIndex: 'lastName',
-            key: 'lastName',
-        },
-        {
-            title: 'Correo electrónico',
-            dataIndex: 'email',
-            key: 'email',
-        },
-        {
-            title: 'Teléfono',
-            dataIndex: 'phone',
-            key: 'phone',
-            render: (text) => text || 'No disponible',
-        },
-        {
-            title: 'Posición',
-            dataIndex: 'position',
-            key: 'position',
-            render: (position) => position?.name || 'No asignado',
-        },
-        {
-            title: 'Rol',
-            dataIndex: 'role',
-            key: 'role',
-            render: (role) => role?.name || 'No asignado',
+            title: 'Cantidad de departamentos',
+            key: 'actions',
+            render: (record) => {
+                return record.departments.length;
+            },
         },
         {
             title: '',
             key: 'actions',
             render: (record) => {
-                if (record._id === currentUser._id) {
-                    return null; // No mostrar acciones para el usuario logueado
-                }
-
                 const menuItems = [
                     {
-                        key: 'view',
-                        label: <Link to={`/users/view/${record._id}`}>Ver detalle</Link>,
-                    },
-                    {
                         key: 'edit',
-                        label: <Link to={`/users/edit/${record._id}`}>Editar datos</Link>,
+                        label: <Link to={`/areas/edit/${record._id}`}>Editar datos</Link>,
                     },
                     {
-                        key: 'editPosition',
-                        label: <Link to={`/users/position/edit/${record._id}`}>Modificar posición</Link>,
+                        key: 'addDepartment',
+                        label: <Link to={`/areas/${record._id}/departments/add`}>Agregar departamento</Link>,
                     },
                     {
                         key: 'delete',
                         label: <Link onClick={() => showDeleteModal(record)}>Eliminar</Link>,
                     },
                 ];
+
+                // Si hay departamentos agrego el modificar
+                if (record.departments?.length > 0) {
+                    menuItems.splice(2, 0, { // Se inserta despues del add
+                        key: 'editDepartments',
+                        label: <Link to={`/areas/${record._id}/departments`}>Modificar departamentos</Link>,
+                    });
+                }
 
                 return (
                     <Dropdown menu={{ items: menuItems }}>
@@ -140,9 +119,9 @@ const UsersTable = () => {
     return (
         <div>
             {loading ? (
-                <Spin tip="Cargando usuarios..." />
+                <Spin tip="Cargando areas..." />
             ) : (
-                <Table dataSource={users} columns={columns} rowKey="_id" />
+                <Table dataSource={areas} columns={columns} rowKey="_id" />
             )}
 
             <Modal
@@ -153,10 +132,10 @@ const UsersTable = () => {
                 okText="Eliminar"
                 cancelText="Cancelar"
             >
-                <p>¿Estás seguro de que deseas eliminar este usuario?</p>
+                <p>¿Estás seguro de que deseas eliminar esta area?</p>
             </Modal>
         </div>
     );
 };
 
-export default UsersTable;
+export default AreasTable;

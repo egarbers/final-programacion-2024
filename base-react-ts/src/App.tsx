@@ -12,10 +12,17 @@ import UserEdit from './components/UserEdit';
 import UserCreate from './components/UserCreate';
 import UserPositionEdit from './components/UserPositionEdit';
 import NotFoundPage from './components/NotFoundPage';
+import AreasTable from './components/AreasTable';
+import AreaEdit from './components/AreaEdit';
+import AreaCreate from './components/AreaCreate';
+import AreaDepartmentsTable from './components/AreaDepartmentsTable';
+import DepartmentCreate from './components/DepartmentCreate';
+import DepartmentEdit from './components/DepartmentEdit';
 
 import PrivateRoute from './components/PrivateRoute';
 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+
 
 const { Sider, Content } = Layout;
 
@@ -89,6 +96,59 @@ function App() {
                                     <PrivateRoute>
                                         <h2>Crear usuario</h2>
                                         <UserCreate />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/areas/list"
+                                element={
+                                    <PrivateRoute>
+                                        <h2>Areas registradas</h2>
+                                        <AreasTable />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/areas/edit/:id"
+                                element={
+                                    <PrivateRoute>
+                                        <h2>Editar area</h2>
+                                        <AreaEdit />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/areas/add"
+                                element={
+                                    <PrivateRoute>
+                                        <h2>Crear area</h2>
+                                        <AreaCreate />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/areas/:id/departments"
+                                element={
+                                    <PrivateRoute>
+                                        <h2>Departamentos del area</h2>
+                                        <AreaDepartmentsTable />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/areas/:id/departments/add"
+                                element={
+                                    <PrivateRoute>
+                                        <DepartmentCreate />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/departments/edit/:id"
+                                element={
+                                    <PrivateRoute>
+                                        <h2>Editar departamento</h2>
+                                        <DepartmentEdit />
                                     </PrivateRoute>
                                 }
                             />
