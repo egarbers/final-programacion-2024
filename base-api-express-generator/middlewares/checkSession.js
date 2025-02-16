@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken'); // Librería para manejar JWT
-const secretKey = 'tu_clave_secreta'; // Cambia esto por tu clave secreta
+const secretKey = '#EG2024'; // Cambia esto por tu clave secreta
 
 // Middleware para verificar si el token está presente y es válido
 const checkSession = (req, res, next) => {
